@@ -2,7 +2,6 @@
 // A simple LRU cache implementation in C++
 //
 // <copyright>
-// This is a part of Euler Zero - see https://github.com/frasnian/euler-zero
 // Copyright (c) 2017 David Starr
 //
 // Distributed under the Boost Software License, Version 1.0. 

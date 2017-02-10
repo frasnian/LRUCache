@@ -23,15 +23,22 @@ public:
     typedef typename container_type::const_reference       const_reference;
     typedef std::size_t                                    size_type;
 
-    LRUCache(size_type size) : max_size_(size)
+    LRUCache(size_type size) 
+        : max_size_(size)
+        , cache_hits_(0)
+        , cache_misses_(0)
+        , update_count_(0)          
+        , bounce_count_(0)        
     {}
 
     const_iterator get(TKey key){
         auto itrLookup = lookupMap.find(key);
         if (lookupMap.end() == itrLookup){
+            ++cache_misses_;
             return end();
         }
         
+        ++cache_hits_;
         auto containerPos = itrLookup->second;
         auto existing = *containerPos;          // save the existing key/value pair
         
@@ -56,6 +63,7 @@ public:
         if (lookupMap.end() == itrLookup){ // it's not in there, need to add a new value
             if (container.size() == max_size()){ 
                 // if already full, get rid of the oldest one:                
+                ++bounce_count_;
                 lookupMap.erase(container.back().first); // erase the oldest key from the lookup map
                 container.pop_back();                    // ...and the LRU container
             }            
@@ -64,6 +72,7 @@ public:
         }
         else{
             // it exists, replace existing value
+            ++update_count_;
             container.erase(itrLookup->second);
             container.push_front(std::make_pair(key, value));
             lookupMap[key] = container.begin();
@@ -77,7 +86,7 @@ public:
 
     inline bool empty() const            { return container.empty(); }
     inline size_type size() const        { return container.size();  }
-    inline size_type max_size() const    { return max_size_;            }
+    inline size_type max_size() const    { return max_size_;         }
     
     inline void clear() {
         container.clear();
@@ -89,11 +98,21 @@ public:
         return (lookupMap.find(key) != lookupMap.end());
     }
 
+    inline unsigned long long cache_hits()   const { return cache_hits_;    }
+    inline unsigned long long cache_misses() const { return cache_misses_;  }
+    inline unsigned long long update_count() const { return update_count_;  }
+    inline unsigned long long bounce_count() const { return bounce_count_;  }
+
     // TODO: Consider adding the following members to the public interface:
     //      resize           ???
     
 private:    
-    size_type                          max_size_;
+    size_type                          max_size_;    
     container_type                     container;
-    std::unordered_map<TKey, iterator> lookupMap;
+    std::unordered_map<TKey, iterator> lookupMap;    
+    // stats/perf:
+    unsigned long long                 cache_hits_;         // get()
+    unsigned long long                 cache_misses_;       // get()
+    unsigned long long                 update_count_;       // put()  - updated value for existing key
+    unsigned long long                 bounce_count_;       // put()  - caused LRU value to be bounced
 };

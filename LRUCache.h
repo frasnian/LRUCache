@@ -40,11 +40,13 @@ public:
         
         ++cache_hits_;
         auto containerPos = itrLookup->second;
-        auto existing = *containerPos;          // save the existing key/value pair
-        
-        container.erase(containerPos);          // get rid of the old one from the existing position list
-        container.push_front(existing);         // and stick it at the front
-        lookupMap[key] = container.begin();     // fix the reference to it in the lookup map
+        if (containerPos != container.begin()){       
+            auto existing = *containerPos;          // save the existing key/value pair
+            
+            container.erase(containerPos);          // get rid of the old one from the existing position list
+            container.push_front(existing);         // and stick it at the front
+            lookupMap[key] = container.begin();     // fix the reference to it in the lookup map
+        }
         return container.begin();
     }
     
@@ -58,7 +60,7 @@ public:
         }
     }
 
-    void put(TKey key, TValue value){   // consider: return bool (new vs. replaced existing)?
+    void put(TKey key, TValue value){   // TODO: consider: return bool (new vs. replaced existing)?
         auto itrLookup = lookupMap.find(key);
         if (lookupMap.end() == itrLookup){ // it's not in there, need to add a new value
             if (container.size() == max_size()){ 
